@@ -33,7 +33,7 @@
     .toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
     .btn{border:0;border-radius:16px;background:var(--primary);color:#fff;padding:12px 16px;font-weight:900;cursor:pointer;font-size:15px;box-shadow:0 10px 22px rgba(225,29,72,.18)}.btn:hover{background:var(--primary2)}.btn:disabled{opacity:.55;cursor:not-allowed}
     .btn.secondary{background:#fff;color:#9f1239;border:1px solid #fecdd3;box-shadow:none}.btn.danger{background:var(--danger)}.btn.ghost{background:transparent;color:var(--accent);padding:8px;box-shadow:none}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field label{display:block;font-weight:900;margin-bottom:8px}.field input{width:100%;border:1px solid #fecdd3;border-radius:16px;padding:14px 15px;font-size:16px;background:#fff}.field input:focus{outline:3px solid rgba(251,113,133,.22);border-color:#fb7185}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field label{display:block;font-weight:900;margin-bottom:8px}.field input{width:100%;border:1px solid #fecdd3;border-radius:16px;padding:14px 15px;font-size:16px;background:#fff}.field input:focus{outline:3px solid rgba(251,113,133,.22);border-color:#fb7185}.account-wrap{display:flex;align-items:center;border:1px solid #fecdd3;border-radius:16px;background:#fff;overflow:hidden}.account-wrap:focus-within{outline:3px solid rgba(251,113,133,.22);border-color:#fb7185}.account-wrap input{border:0;border-radius:0;outline:0;min-width:0}.account-wrap input:focus{outline:0;border:0}.account-suffix{padding:0 14px 0 4px;color:#e11d48;font-weight:900;white-space:nowrap;background:#fff}
     .login-card .field{margin-bottom:14px}.login-card .btn{width:100%;margin-top:6px;padding:14px 16px}
     .employee-list{display:grid;gap:12px}.employee-card{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:16px;border:1px solid #ffe4e6;border-radius:22px;background:#fff7f8}.employee-main strong{font-size:18px}.pill{display:inline-block;background:#fff;color:#e11d48;border:1px solid #fecdd3;border-radius:999px;padding:8px 11px;font-weight:900}
     .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.info-box{background:#fff;border:1px solid #ffe4e6;border-radius:22px;padding:18px}.info-box span{display:block;color:var(--muted);font-size:14px;margin-bottom:8px}.info-box strong{font-size:20px;color:#9f1239}
@@ -50,8 +50,11 @@
       <div id="authConfigNotice" class="notice" style="display:none">尚未設定 Supabase URL 與 anon key，請先打開 index.html 修改設定。</div>
       <form id="loginForm">
         <div class="field">
-          <label for="loginEmail">電子郵件</label>
-          <input id="loginEmail" type="email" autocomplete="email" required placeholder="admin@example.com">
+          <label for="loginAccount">帳號</label>
+          <div class="account-wrap">
+            <input id="loginAccount" type="text" autocomplete="username" required placeholder="admin" inputmode="email">
+            <span class="account-suffix">@leave.calculator</span>
+          </div>
         </div>
         <div class="field">
           <label for="loginPassword">密碼</label>
@@ -60,7 +63,7 @@
         <button class="btn" id="loginButton" type="submit">登入</button>
       </form>
       <div class="status" id="loginStatus"></div>
-      <div class="login-tip">帳號請先在 Supabase Authentication 建立。若尚未調整 RLS，登入畫面只能限制介面，不等於完整資料庫權限保護。</div>
+      <div class="login-tip">請在 Supabase Authentication 建立完整帳號，例如 admin@leave.calculator。登入時只需要輸入 admin。</div>
     </div>
   </section>
 
@@ -112,9 +115,10 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://jbrbaphximdnqwyoatvp.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_O4HLjBLFa5y5IDA9OMdV8g_6Ujf49RQ';
+    const SUPABASE_URL = '請貼上你的 Supabase Project URL';
+    const SUPABASE_ANON_KEY = '請貼上你的 Supabase anon public key';
     const TABLE_NAME = 'employees';
+    const LOGIN_EMAIL_DOMAIN = '@leave.calculator';
     const supabaseReady = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 30;
     const db = supabaseReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -146,10 +150,26 @@
 
     document.getElementById('employeeForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){alert('尚未設定 Supabase');return}const id=document.getElementById('employeeId').value;const name=document.getElementById('employeeName').value.trim();const startDate=document.getElementById('startDate').value;if(!name||!startDate)return;if(parseDate(startDate)>getToday()){alert('入職日期不能晚於今天。');return}document.getElementById('formStatus').textContent='儲存中...';try{if(id)await updateEmployee({id,name,startDate});else await insertEmployee({name,startDate});document.getElementById('formStatus').textContent='已儲存';await showView('listView')}catch(err){document.getElementById('formStatus').textContent='儲存失敗：'+err.message}})
 
-    document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){document.getElementById('loginStatus').textContent='尚未設定 Supabase URL 與 anon key。';return}const email=document.getElementById('loginEmail').value.trim();const password=document.getElementById('loginPassword').value;const button=document.getElementById('loginButton');const status=document.getElementById('loginStatus');button.disabled=true;status.textContent='登入中...';const {data,error}=await db.auth.signInWithPassword({email,password});button.disabled=false;if(error){status.textContent='登入失敗：'+error.message;return}showApp(data.session)})
+    document.getElementById('loginForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      if(!db){document.getElementById('loginStatus').textContent='尚未設定 Supabase URL 與 anon key。';return}
+      const rawAccount=document.getElementById('loginAccount').value.trim();
+      const account=rawAccount.split('@')[0];
+      const email=`${account}${LOGIN_EMAIL_DOMAIN}`;
+      const password=document.getElementById('loginPassword').value;
+      const button=document.getElementById('loginButton');
+      const status=document.getElementById('loginStatus');
+      if(!account){status.textContent='請輸入帳號。';return}
+      button.disabled=true;
+      status.textContent='登入中...';
+      const {data,error}=await db.auth.signInWithPassword({email,password});
+      button.disabled=false;
+      if(error){status.textContent='登入失敗：'+error.message;return}
+      showApp(data.session)
+    })
 
-    async function logout(){if(db)await db.auth.signOut();document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid';document.getElementById('loginPassword').value='';document.getElementById('loginStatus').textContent='已登出';showView('homeView')}
-    function showApp(session){document.getElementById('authView').style.display='none';document.getElementById('appShell').style.display='block';document.getElementById('userEmail').textContent=session?.user?.email || '';showView('homeView')}
+    async function logout(){if(db)await db.auth.signOut();document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid';document.getElementById('loginAccount').value='';document.getElementById('loginPassword').value='';document.getElementById('loginStatus').textContent='已登出';showView('homeView')}
+    function showApp(session){document.getElementById('authView').style.display='none';document.getElementById('appShell').style.display='block';const email=session?.user?.email || '';document.getElementById('userEmail').textContent=email.endsWith(LOGIN_EMAIL_DOMAIN)?email.replace(LOGIN_EMAIL_DOMAIN,''):email;showView('homeView')}
     async function init(){document.getElementById('authConfigNotice').style.display=supabaseReady?'none':'block';if(!db)return;const {data}=await db.auth.getSession();if(data.session)showApp(data.session);db.auth.onAuthStateChange((_event,session)=>{if(session)showApp(session);else{document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid'}})}
     init();
   </script>
