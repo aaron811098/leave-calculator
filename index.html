@@ -25,7 +25,7 @@
     .view{display:none}.view.active{display:block}
     h2{margin:0 0 6px;font-size:28px;letter-spacing:-.03em}.muted{color:var(--muted);font-size:14px}
     .home-hero{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:20px}.home-hero h2{font-size:34px}.home-hero p{margin:8px 0 0;color:var(--muted)}
-    .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+    .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     .menu-card{border:1px solid rgba(255,255,255,.95);border-radius:24px;background:rgba(255,255,255,.9);padding:22px;cursor:pointer;transition:.18s;text-align:left;min-height:174px;box-shadow:0 12px 28px rgba(15,23,42,.06)}
     .menu-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(225,29,72,.15)}
     .menu-icon{width:52px;height:52px;display:grid;place-items:center;background:#fff1f2;color:var(--accent);border-radius:18px;font-size:25px;margin-bottom:16px}.menu-card h2{font-size:21px}.menu-card p{color:var(--muted);font-size:14px;line-height:1.6}
@@ -74,8 +74,6 @@
     </header>
 
     <section id="homeView" class="view active card">
-      <div class="home-hero"><div><h2>今天的特休狀態</h2><p>快速查看員工年資、可休天數與本期特休期間。</p></div></div>
-      <div class="soft-panel"><div class="stat-grid"><div class="stat">計算方式<b>週年制</b></div><div class="stat">更新頻率<b>每日</b></div></div></div>
       <div class="home-grid">
         <button class="menu-card" onclick="showView('listView')"><div class="menu-icon">👥</div><h2>查看員工資料</h2><p>查看特休、年資與本期特休期間，也可以編輯員工資料。</p></button>
         <button class="menu-card" onclick="showAddView()"><div class="menu-icon">＋</div><h2>新增員工</h2><p>新增員工姓名與入職日期，資料會存進 Supabase。</p></button>
