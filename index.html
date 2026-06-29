@@ -26,9 +26,9 @@
     h2{margin:0 0 6px;font-size:28px;letter-spacing:-.03em}.muted{color:var(--muted);font-size:14px}
     .home-hero{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:20px}.home-hero h2{font-size:34px}.home-hero p{margin:8px 0 0;color:var(--muted)}
     .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    .menu-card{border:1px solid rgba(255,255,255,.95);border-radius:24px;background:rgba(255,255,255,.9);padding:22px;cursor:pointer;transition:.18s;text-align:left;min-height:174px;box-shadow:0 12px 28px rgba(15,23,42,.06)}
+    .menu-card{border:1px solid rgba(255,255,255,.95);border-radius:24px;background:rgba(255,255,255,.9);padding:22px;cursor:pointer;transition:.18s;text-align:left;min-height:174px;box-shadow:0 12px 28px rgba(15,23,42,.06);display:grid;grid-template-columns:52px 1fr;align-items:center;column-gap:14px;row-gap:12px;color:var(--text);appearance:none;-webkit-appearance:none}
     .menu-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(225,29,72,.15)}
-    .menu-icon{width:52px;height:52px;display:grid;place-items:center;background:#fff1f2;color:var(--accent);border-radius:18px;font-size:25px;margin-bottom:16px}.menu-card h2{font-size:21px}.menu-card p{color:var(--muted);font-size:14px;line-height:1.6}
+    .menu-icon{grid-column:1;grid-row:1;width:52px;height:52px;display:grid;place-items:center;background:#fff1f2;color:var(--accent);border-radius:18px;font-size:25px;margin-bottom:0}.menu-card h2{grid-column:2;grid-row:1;margin:0;font-size:21px;color:#0ea5e9}.menu-card p{grid-column:1 / -1;margin:0;color:var(--muted);font-size:14px;line-height:1.6}
     .soft-panel{margin-top:20px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);border-radius:26px;padding:18px}.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.stat{background:#fff;border:1px solid #ffe4e6;border-radius:20px;padding:16px;color:var(--muted)}.stat b{display:block;font-size:26px;color:var(--accent);margin-top:8px}
     .toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
     .btn{border:0;border-radius:16px;background:var(--primary);color:#fff;padding:12px 16px;font-weight:900;cursor:pointer;font-size:15px;box-shadow:0 10px 22px rgba(225,29,72,.18)}.btn:hover{background:var(--primary2)}.btn:disabled{opacity:.55;cursor:not-allowed}
@@ -38,7 +38,7 @@
     .employee-list{display:grid;gap:12px}.employee-card{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:16px;border:1px solid #ffe4e6;border-radius:22px;background:#fff7f8}.employee-card.clickable{cursor:pointer;transition:.18s}.employee-card.clickable:hover{transform:translateY(-2px);background:#fff;box-shadow:0 12px 26px rgba(225,29,72,.12)}.employee-main strong{font-size:18px}.pill{display:inline-block;background:#fff;color:#e11d48;border:1px solid #fecdd3;border-radius:999px;padding:8px 11px;font-weight:900}
     .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.info-box{background:#fff;border:1px solid #ffe4e6;border-radius:22px;padding:18px}.info-box span{display:block;color:var(--muted);font-size:14px;margin-bottom:8px}.info-box strong{font-size:20px;color:#9f1239}
     .empty{padding:28px;border:1px dashed #fda4af;border-radius:20px;text-align:center;color:var(--muted);background:#fff}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:14px;margin:12px 0}.status{font-size:14px;color:var(--muted);margin-top:10px}
-    @media(max-width:760px){.app{padding:22px 14px 40px}header{align-items:center;flex-direction:row;justify-content:space-between;gap:10px}.brand{min-width:0}.brand h1{font-size:30px;line-height:1.15}.header-actions{justify-content:flex-end;flex-wrap:nowrap;margin-left:auto}.header-actions .btn{white-space:nowrap;padding:12px 16px}.home-hero{align-items:flex-start;flex-direction:column}.home-grid,.form-grid,.detail-grid,.stat-grid{grid-template-columns:1fr}.menu-card{display:grid;grid-template-columns:64px 1fr;align-items:center;column-gap:16px;row-gap:12px;min-height:auto;padding:20px}.menu-icon{grid-column:1;margin-bottom:0}.menu-card h2{grid-column:2;margin:0;font-size:24px}.menu-card p{grid-column:1 / -1;margin:0}.employee-card{grid-template-columns:1fr}.card{padding:20px}.home-hero h2{font-size:30px}.login-card{padding:26px 20px}.login-card h1{font-size:30px}}@media(max-width:390px){.brand h1{font-size:28px}.header-actions .btn{padding:11px 14px}.menu-card{grid-template-columns:58px 1fr;padding:18px}.menu-card h2{font-size:22px}}
+    @media(max-width:760px){.app{padding:22px 14px 40px}header{align-items:center;flex-direction:row;justify-content:space-between;gap:10px}.brand{min-width:0}.brand h1{font-size:30px;line-height:1.15}.header-actions{justify-content:flex-end;flex-wrap:nowrap;margin-left:auto}.header-actions .btn{white-space:nowrap;padding:12px 16px}.home-hero{align-items:flex-start;flex-direction:column}.home-grid,.form-grid,.detail-grid,.stat-grid{grid-template-columns:1fr}.menu-card{grid-template-columns:64px 1fr;column-gap:16px;min-height:auto;padding:20px}.menu-icon{width:64px;height:64px}.menu-card h2{font-size:24px;color:#0ea5e9}.employee-card{grid-template-columns:1fr}.card{padding:20px}.home-hero h2{font-size:30px}.login-card{padding:26px 20px}.login-card h1{font-size:30px}}@media(max-width:390px){.brand h1{font-size:28px}.header-actions .btn{padding:11px 14px}.menu-card{grid-template-columns:58px 1fr;padding:18px}.menu-icon{width:58px;height:58px}.menu-card h2{font-size:22px;color:#0ea5e9}}
   </style>
 </head>
 <body>
@@ -75,14 +75,14 @@
 
     <section id="homeView" class="view active card">
       <div class="home-grid">
-        <button class="menu-card" onclick="showView('listView')"><div class="menu-icon">👥</div><h2>查看員工資料</h2><p>查看特休、年資與本期特休期間，也可以編輯員工資料。</p></button>
-        <button class="menu-card" onclick="showAddView()"><div class="menu-icon">＋</div><h2>新增員工</h2><p>新增員工姓名與入職日期，資料會存進 Supabase。</p></button>
+        <button class="menu-card" onclick="showView('listView')"><div class="menu-icon">👥</div><h2>查看員工資料</h2><p>查看特休、年資與特休期限，也可以編輯員工資料。</p></button>
+        <button class="menu-card" onclick="showAddView()"><div class="menu-icon">＋</div><h2>新增員工</h2><p>新增員工姓名與入職日期。</p></button>
         <button class="menu-card" onclick="showView('deleteView')"><div class="menu-icon">🗑️</div><h2>刪除員工</h2><p>刪除離職或不需要保留的員工資料。</p></button>
       </div>
     </section>
 
     <section id="listView" class="view card">
-      <div class="toolbar"><div><h2>查看員工資料</h2><p class="muted">點選任一位員工整列即可查看完整特休資訊，也可以直接編輯員工資料。</p></div><div class="actions"><button class="btn secondary" onclick="showView('homeView')">回首頁</button><button class="btn" onclick="showAddView()">新增員工</button></div></div>
+      <div class="toolbar"><div><h2>查看員工資料</h2><p class="muted">點選員工即可查看完整特休資訊，也可直接編輯員工資料。</p></div><div class="actions"><button class="btn secondary" onclick="showView('homeView')">回首頁</button><button class="btn" onclick="showAddView()">新增員工</button></div></div>
       <div id="employeeList" class="employee-list"></div>
       <div class="status" id="listStatus"></div>
     </section>
