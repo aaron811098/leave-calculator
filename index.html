@@ -69,13 +69,12 @@
     <header>
       <div class="brand"><h1>員工特休計算系統</h1></div>
       <div class="header-actions">
-        <span class="user-email" id="userEmail"></span>
         <button class="btn secondary" onclick="logout()">登出</button>
       </div>
     </header>
 
     <section id="homeView" class="view active card">
-      <div class="home-hero"><div><h2>今天的特休狀態</h2><p>快速查看員工年資、可休天數與下次增加日期。</p></div><button class="btn" onclick="showAddView()">＋ 新增員工</button></div>
+      <div class="home-hero"><div><h2>今天的特休狀態</h2><p>快速查看員工年資、可休天數與下次增加日期。</p></div></div>
       <div class="soft-panel"><div class="stat-grid"><div class="stat">計算方式<b>週年制</b></div><div class="stat">更新頻率<b>每日</b></div></div></div>
       <div class="home-grid">
         <button class="menu-card" onclick="showView('listView')"><div class="menu-icon">👥</div><h2>查看員工資料</h2><p>查看特休、年資、下一次增加日期，也可以編輯員工資料。</p></button>
@@ -126,8 +125,17 @@
     function addMonths(date,months){const d=new Date(date);const day=d.getDate();d.setMonth(d.getMonth()+months);if(d.getDate()<day)d.setDate(0);return d}
     function addYears(date,years){return addMonths(date,years*12)}
     function diffYMD(start,end){let y=end.getFullYear()-start.getFullYear();let m=end.getMonth()-start.getMonth();let d=end.getDate()-start.getDate();if(d<0){m--;const prev=new Date(end.getFullYear(),end.getMonth(),0);d+=prev.getDate()}if(m<0){y--;m+=12}return{years:y,months:m,days:d}}
-    function getServiceYears(start,today){return Math.max(0,(today-start)/(365.2425*24*60*60*1000))}
-    function getLeaveDays(start,today){const years=getServiceYears(start,today);if(years<0.5)return 0;if(years<1)return 3;if(years<2)return 7;if(years<3)return 10;if(years<5)return 14;if(years<10)return 15;return Math.min(15+Math.floor(years-9),30)}
+    function getCompletedYears(start,today){let years=today.getFullYear()-start.getFullYear();if(addYears(start,years)>today)years--;return Math.max(0,years)}
+    function getLeaveDays(start,today){
+      if(today<addMonths(start,6))return 0;
+      if(today<addYears(start,1))return 3;
+      if(today<addYears(start,2))return 7;
+      if(today<addYears(start,3))return 10;
+      if(today<addYears(start,5))return 14;
+      if(today<addYears(start,10))return 15;
+      const years=getCompletedYears(start,today);
+      return Math.min(15+(years-9),30);
+    }
     function getCurrentPeriod(start,today){const half=addMonths(start,6);if(today<half)return{periodStart:null,periodEnd:null};if(today<addYears(start,1))return{periodStart:half,periodEnd:new Date(addYears(start,1).getTime()-86400000)};let years=today.getFullYear()-start.getFullYear();let pStart=addYears(start,years);if(pStart>today){years--;pStart=addYears(start,years)}return{periodStart:pStart,periodEnd:new Date(addYears(pStart,1).getTime()-86400000)}}
     function getNextIncrease(start,today){const checkpoints=[6,12,24,36,60,120,132,144,156,168,180,192,204,216,228,240,252,264,276,288,300,312,324,336,348,360];for(const m of checkpoints){const date=addMonths(start,m);if(date>today)return{date,days:getLeaveDays(start,date)}}return null}
     function escapeHtml(text){return String(text).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
@@ -167,7 +175,7 @@
     })
 
     async function logout(){if(db)await db.auth.signOut();document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid';document.getElementById('loginAccount').value='';document.getElementById('loginPassword').value='';document.getElementById('loginStatus').textContent='已登出';showView('homeView')}
-    function showApp(session){document.getElementById('authView').style.display='none';document.getElementById('appShell').style.display='block';const email=session?.user?.email || '';document.getElementById('userEmail').textContent=email.endsWith(LOGIN_EMAIL_DOMAIN)?email.replace(LOGIN_EMAIL_DOMAIN,''):email;showView('homeView')}
+    function showApp(session){document.getElementById('authView').style.display='none';document.getElementById('appShell').style.display='block';showView('homeView')}
     async function init(){document.getElementById('authConfigNotice').style.display=supabaseReady?'none':'block';if(!db)return;const {data}=await db.auth.getSession();if(data.session)showApp(data.session);db.auth.onAuthStateChange((_event,session)=>{if(session)showApp(session);else{document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid'}})}
     init();
   </script>
