@@ -14,10 +14,13 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh}
     body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 15% 10%,rgba(251,113,133,.28),transparent 32%),radial-gradient(circle at 85% 20%,rgba(59,130,246,.18),transparent 30%),radial-gradient(circle at 70% 90%,rgba(251,191,36,.16),transparent 35%);pointer-events:none}
-    .app{position:relative;max-width:1080px;margin:auto;padding:30px 18px 54px}
+    .auth-screen{position:relative;min-height:100vh;display:grid;place-items:center;padding:22px}
+    .login-card{width:min(460px,100%);background:var(--card);border:1px solid var(--border);border-radius:32px;box-shadow:var(--shadow);padding:32px;backdrop-filter:blur(14px)}
+    .login-card h1{margin:0 0 8px;font-size:34px;letter-spacing:-.04em}.login-card p{margin:0 0 24px;color:var(--muted);line-height:1.7}.login-logo{width:64px;height:64px;border-radius:22px;background:#fff1f2;color:var(--accent);display:grid;place-items:center;font-size:30px;margin-bottom:18px}.login-tip{margin-top:16px;font-size:13px;color:var(--muted);line-height:1.7}
+    .app{position:relative;max-width:1080px;margin:auto;padding:30px 18px 54px;display:none}
     header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}
-    .brand h1{margin:0;font-size:clamp(28px,5vw,44px);letter-spacing:-.04em}.brand p{margin:9px 0 0;color:var(--muted)}
-    .today-badge{background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:999px;padding:11px 16px;color:#9f1239;box-shadow:var(--shadow);white-space:nowrap;font-weight:800;backdrop-filter:blur(12px)}
+    .brand h1{margin:0;font-size:clamp(28px,5vw,44px);letter-spacing:-.04em}
+    .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.user-email{font-size:13px;color:var(--muted);background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:999px;padding:9px 12px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;backdrop-filter:blur(14px)}
     .view{display:none}.view.active{display:block}
     h2{margin:0 0 6px;font-size:28px;letter-spacing:-.03em}.muted{color:var(--muted);font-size:14px}
@@ -26,36 +29,57 @@
     .menu-card{border:1px solid rgba(255,255,255,.95);border-radius:24px;background:rgba(255,255,255,.9);padding:22px;cursor:pointer;transition:.18s;text-align:left;min-height:174px;box-shadow:0 12px 28px rgba(15,23,42,.06)}
     .menu-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(225,29,72,.15)}
     .menu-icon{width:52px;height:52px;display:grid;place-items:center;background:#fff1f2;color:var(--accent);border-radius:18px;font-size:25px;margin-bottom:16px}.menu-card h2{font-size:21px}.menu-card p{color:var(--muted);font-size:14px;line-height:1.6}
-    .soft-panel{margin-top:20px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);border-radius:26px;padding:18px}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.stat{background:#fff;border:1px solid #ffe4e6;border-radius:20px;padding:16px;color:var(--muted)}.stat b{display:block;font-size:26px;color:var(--accent);margin-top:8px}
+    .soft-panel{margin-top:20px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);border-radius:26px;padding:18px}.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.stat{background:#fff;border:1px solid #ffe4e6;border-radius:20px;padding:16px;color:var(--muted)}.stat b{display:block;font-size:26px;color:var(--accent);margin-top:8px}
     .toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-    .btn{border:0;border-radius:16px;background:var(--primary);color:#fff;padding:12px 16px;font-weight:900;cursor:pointer;font-size:15px;box-shadow:0 10px 22px rgba(225,29,72,.18)}.btn:hover{background:var(--primary2)}
+    .btn{border:0;border-radius:16px;background:var(--primary);color:#fff;padding:12px 16px;font-weight:900;cursor:pointer;font-size:15px;box-shadow:0 10px 22px rgba(225,29,72,.18)}.btn:hover{background:var(--primary2)}.btn:disabled{opacity:.55;cursor:not-allowed}
     .btn.secondary{background:#fff;color:#9f1239;border:1px solid #fecdd3;box-shadow:none}.btn.danger{background:var(--danger)}.btn.ghost{background:transparent;color:var(--accent);padding:8px;box-shadow:none}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field label{display:block;font-weight:900;margin-bottom:8px}.field input{width:100%;border:1px solid #fecdd3;border-radius:16px;padding:14px 15px;font-size:16px;background:#fff}.field input:focus{outline:3px solid rgba(251,113,133,.22);border-color:#fb7185}
+    .login-card .field{margin-bottom:14px}.login-card .btn{width:100%;margin-top:6px;padding:14px 16px}
     .employee-list{display:grid;gap:12px}.employee-card{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:16px;border:1px solid #ffe4e6;border-radius:22px;background:#fff7f8}.employee-main strong{font-size:18px}.pill{display:inline-block;background:#fff;color:#e11d48;border:1px solid #fecdd3;border-radius:999px;padding:8px 11px;font-weight:900}
     .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.info-box{background:#fff;border:1px solid #ffe4e6;border-radius:22px;padding:18px}.info-box span{display:block;color:var(--muted);font-size:14px;margin-bottom:8px}.info-box strong{font-size:20px;color:#9f1239}
-    .empty{padding:28px;border:1px dashed #fda4af;border-radius:20px;text-align:center;color:var(--muted);background:#fff}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:14px;margin:12px 0}.status{font-size:14px;color:var(--muted);margin-top:10px}.setup{background:rgba(255,255,255,.72);border:1px solid #fff;border-radius:22px;padding:16px;margin-top:18px;color:var(--muted)}.setup code{background:#fff1f2;color:#be123c;padding:2px 5px;border-radius:6px}
-    @media(max-width:760px){.app{padding:22px 14px 40px}header,.home-hero{align-items:flex-start;flex-direction:column}.home-grid,.form-grid,.detail-grid,.stat-grid{grid-template-columns:1fr}.employee-card{grid-template-columns:1fr}.today-badge{white-space:normal}.card{padding:20px}.home-hero h2{font-size:30px}}
+    .empty{padding:28px;border:1px dashed #fda4af;border-radius:20px;text-align:center;color:var(--muted);background:#fff}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:14px;margin:12px 0}.status{font-size:14px;color:var(--muted);margin-top:10px}
+    @media(max-width:760px){.app{padding:22px 14px 40px}header,.home-hero{align-items:flex-start;flex-direction:column}.header-actions{justify-content:flex-start}.home-grid,.form-grid,.detail-grid,.stat-grid{grid-template-columns:1fr}.employee-card{grid-template-columns:1fr}.card{padding:20px}.home-hero h2{font-size:30px}.login-card{padding:26px 20px}.login-card h1{font-size:30px}}
   </style>
 </head>
 <body>
-  <div class="app">
+  <section id="authView" class="auth-screen">
+    <div class="login-card">
+      <div class="login-logo">🔐</div>
+      <h1>員工特休計算系統</h1>
+      <p>請使用管理員帳號登入後查看、新增、編輯或刪除員工資料。</p>
+      <div id="authConfigNotice" class="notice" style="display:none">尚未設定 Supabase URL 與 anon key，請先打開 index.html 修改設定。</div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">電子郵件</label>
+          <input id="loginEmail" type="email" autocomplete="email" required placeholder="admin@example.com">
+        </div>
+        <div class="field">
+          <label for="loginPassword">密碼</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="請輸入密碼">
+        </div>
+        <button class="btn" id="loginButton" type="submit">登入</button>
+      </form>
+      <div class="status" id="loginStatus"></div>
+      <div class="login-tip">帳號請先在 Supabase Authentication 建立。若尚未調整 RLS，登入畫面只能限制介面，不等於完整資料庫權限保護。</div>
+    </div>
+  </section>
+
+  <div id="appShell" class="app">
     <header>
-      <div class="brand"><h1>員工特休計算系統</h1><p>資料儲存在 Supabase，可部署到 GitHub Pages。</p></div>
-      <div class="today-badge" id="todayBadge"></div>
+      <div class="brand"><h1>員工特休計算系統</h1></div>
+      <div class="header-actions">
+        <span class="user-email" id="userEmail"></span>
+        <button class="btn secondary" onclick="logout()">登出</button>
+      </div>
     </header>
 
     <section id="homeView" class="view active card">
       <div class="home-hero"><div><h2>今天的特休狀態</h2><p>快速查看員工年資、可休天數與下次增加日期。</p></div><button class="btn" onclick="showAddView()">＋ 新增員工</button></div>
-      <div id="configNotice" class="notice" style="display:none">尚未設定 Supabase URL 與 anon key，請先打開 index.html 修改設定。</div>
-      <div class="soft-panel"><div class="stat-grid"><div class="stat">資料來源<b>Supabase</b></div><div class="stat">計算方式<b>週年制</b></div><div class="stat">更新頻率<b>每日</b></div></div></div>
+      <div class="soft-panel"><div class="stat-grid"><div class="stat">計算方式<b>週年制</b></div><div class="stat">更新頻率<b>每日</b></div></div></div>
       <div class="home-grid">
         <button class="menu-card" onclick="showView('listView')"><div class="menu-icon">👥</div><h2>查看員工資料</h2><p>查看特休、年資、下一次增加日期，也可以編輯員工資料。</p></button>
         <button class="menu-card" onclick="showAddView()"><div class="menu-icon">＋</div><h2>新增員工</h2><p>新增員工姓名與入職日期，資料會存進 Supabase。</p></button>
         <button class="menu-card" onclick="showView('deleteView')"><div class="menu-icon">🗑️</div><h2>刪除員工</h2><p>刪除離職或不需要保留的員工資料。</p></button>
-      </div>
-      <div class="setup">
-        <strong>第一次使用要先設定：</strong><br>
-        在本檔案上方找到 <code>SUPABASE_URL</code> 和 <code>SUPABASE_ANON_KEY</code>，換成你的 Supabase 專案資料。
       </div>
     </section>
 
@@ -88,8 +112,8 @@
   </div>
 
   <script>
-    const SUPABASE_URL = https://jbrbaphximdnqwyoatvp.supabase.co/rest/v1/;
-    const SUPABASE_ANON_KEY = sb_publishable_O4HLjBLFa5y5IDA9OMdV8g_6Ujf49RQ;
+    const SUPABASE_URL = 'https://jbrbaphximdnqwyoatvp.supabase.co/rest/v1/';
+    const SUPABASE_ANON_KEY = 'sb_publishable_O4HLjBLFa5y5IDA9OMdV8g_6Ujf49RQ';
     const TABLE_NAME = 'employees';
     const supabaseReady = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 30;
     const db = supabaseReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -117,12 +141,16 @@
 
     async function renderEmployeeList(){const list=document.getElementById('employeeList');const status=document.getElementById('listStatus');list.innerHTML='<div class="empty">讀取中...</div>';const employees=await loadEmployees();status.textContent=`共 ${employees.length} 位員工`;if(!employees.length){list.innerHTML='<div class="empty">目前沒有員工資料，請先新增員工。</div>';return}const today=getToday();list.innerHTML=employees.map(e=>{const start=parseDate(e.startDate);const leaveDays=getLeaveDays(start,today);const s=diffYMD(start,today);return `<div class="employee-card"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div><span class="pill">目前特休 ${leaveDays} 天</span><div class="muted" style="margin-top:8px">年資：${s.years} 年 ${s.months} 個月 ${s.days} 天</div></div><div class="actions" style="margin-top:0"><button class="btn" onclick="showDetail('${e.id}')">查看</button><button class="btn secondary" onclick="showEditView('${e.id}')">編輯</button></div></div>`}).join('')}
     async function showDetail(id){const employees=await loadEmployees();const e=employees.find(x=>x.id===id);if(!e)return;const start=parseDate(e.startDate);const today=getToday();const leaveDays=getLeaveDays(start,today);const s=diffYMD(start,today);const p=getCurrentPeriod(start,today);const next=getNextIncrease(start,today);document.getElementById('employeeDetail').innerHTML=`<h3 style="font-size:28px;margin:0 0 4px">${escapeHtml(e.name)}</h3><div class="muted">入職日期：${e.startDate}</div><div class="detail-grid"><div class="info-box"><span>目前特休</span><strong>${leaveDays} 天</strong></div><div class="info-box"><span>目前年資</span><strong>${s.years} 年 ${s.months} 個月 ${s.days} 天</strong></div><div class="info-box"><span>本期特休期間</span><strong>${p.periodStart?`${formatDate(p.periodStart)} ～ ${formatDate(p.periodEnd)}`:'尚未產生特休'}</strong></div><div class="info-box"><span>下一次增加特休</span><strong>${next?`${formatDate(next.date)}，變成 ${next.days} 天`:'已達最高 30 天'}</strong></div></div><div class="actions"><button class="btn" onclick="showEditView('${e.id}')">編輯員工資料</button><button class="btn secondary" onclick="showView('listView')">回員工列表</button></div>`;showView('detailView')}
-    async function renderDeleteList(){const list=document.getElementById('deleteList');const status=document.getElementById('deleteStatus');list.innerHTML='<div class="empty">讀取中...</div>';const employees=await loadEmployees();status.textContent=`共 ${employees.length} 位員工`;if(!employees.length){list.innerHTML='<div class="empty">目前沒有可刪除的員工資料。</div>';return}list.innerHTML=employees.map(e=>`<div class="employee-card"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div class="muted">刪除後無法還原</div><button class="btn danger" onclick="deleteEmployee('${e.id}','${escapeHtml(e.name)}')">刪除</button></div>`).join('')}
-    async function deleteEmployee(id,name){if(!confirm(`確定要刪除「${name}」嗎？`))return;try{await removeEmployee(id);await renderDeleteList()}catch(err){alert('刪除失敗：'+err.message)}}
+    async function renderDeleteList(){const list=document.getElementById('deleteList');const status=document.getElementById('deleteStatus');list.innerHTML='<div class="empty">讀取中...</div>';const employees=await loadEmployees();status.textContent=`共 ${employees.length} 位員工`;if(!employees.length){list.innerHTML='<div class="empty">目前沒有可刪除的員工資料。</div>';return}list.innerHTML=employees.map(e=>`<div class="employee-card"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div class="muted">刪除後無法還原</div><button class="btn danger" onclick="deleteEmployee('${e.id}')">刪除</button></div>`).join('')}
+    async function deleteEmployee(id){const employees=await loadEmployees();const employee=employees.find(e=>e.id===id);const name=employee?employee.name:'這位員工';if(!confirm(`確定要刪除「${name}」嗎？`))return;try{await removeEmployee(id);await renderDeleteList()}catch(err){alert('刪除失敗：'+err.message)}}
 
     document.getElementById('employeeForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){alert('尚未設定 Supabase');return}const id=document.getElementById('employeeId').value;const name=document.getElementById('employeeName').value.trim();const startDate=document.getElementById('startDate').value;if(!name||!startDate)return;if(parseDate(startDate)>getToday()){alert('入職日期不能晚於今天。');return}document.getElementById('formStatus').textContent='儲存中...';try{if(id)await updateEmployee({id,name,startDate});else await insertEmployee({name,startDate});document.getElementById('formStatus').textContent='已儲存';await showView('listView')}catch(err){document.getElementById('formStatus').textContent='儲存失敗：'+err.message}})
 
-    function init(){document.getElementById('todayBadge').textContent=`今日日期：${formatDate(getToday())}`;document.getElementById('configNotice').style.display=supabaseReady?'none':'block'}
+    document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db){document.getElementById('loginStatus').textContent='尚未設定 Supabase URL 與 anon key。';return}const email=document.getElementById('loginEmail').value.trim();const password=document.getElementById('loginPassword').value;const button=document.getElementById('loginButton');const status=document.getElementById('loginStatus');button.disabled=true;status.textContent='登入中...';const {data,error}=await db.auth.signInWithPassword({email,password});button.disabled=false;if(error){status.textContent='登入失敗：'+error.message;return}showApp(data.session)})
+
+    async function logout(){if(db)await db.auth.signOut();document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid';document.getElementById('loginPassword').value='';document.getElementById('loginStatus').textContent='已登出';showView('homeView')}
+    function showApp(session){document.getElementById('authView').style.display='none';document.getElementById('appShell').style.display='block';document.getElementById('userEmail').textContent=session?.user?.email || '';showView('homeView')}
+    async function init(){document.getElementById('authConfigNotice').style.display=supabaseReady?'none':'block';if(!db)return;const {data}=await db.auth.getSession();if(data.session)showApp(data.session);db.auth.onAuthStateChange((_event,session)=>{if(session)showApp(session);else{document.getElementById('appShell').style.display='none';document.getElementById('authView').style.display='grid'}})}
     init();
   </script>
 </body>
