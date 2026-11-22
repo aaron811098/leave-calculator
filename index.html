@@ -141,6 +141,7 @@
     const SUPABASE_URL = 'https://jbrbaphximdnqwyoatvp.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_O4HLjBLFa5y5IDA9OMdV8g_6Ujf49RQ';
     const TABLE_NAME = 'employees';
+    const USAGE_TABLE_NAME = 'leave_usage';
     const LOGIN_EMAIL_DOMAIN = '@leave.calculator';
     const supabaseReady = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 30;
     const db = supabaseReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -149,10 +150,31 @@
     function getToday(){const now=new Date();return new Date(now.getFullYear(),now.getMonth(),now.getDate())}
     function parseDate(str){const [y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d)}
     function formatDate(date){const y=date.getFullYear();const m=String(date.getMonth()+1).padStart(2,'0');const d=String(date.getDate()).padStart(2,'0');return `${y}-${m}-${d}`}
-    function addMonths(date,months){const d=new Date(date);const day=d.getDate();d.setMonth(d.getMonth()+months);if(d.getDate()<day)d.setDate(0);return d}
+    // 日期皆以本地年月日比較，不以 365.25 天估算年資。
+    function addMonths(date,months){
+      const target=new Date(date.getFullYear(),date.getMonth()+months,1);
+      const maxDay=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();
+      target.setDate(Math.min(date.getDate(),maxDay));
+      return target;
+    }
+    // 週年均由原始入職日換算，避免 2/29 入職員工跨閏年逐年漂移。
     function addYears(date,years){return addMonths(date,years*12)}
-    function diffYMD(start,end){let y=end.getFullYear()-start.getFullYear();let m=end.getMonth()-start.getMonth();let d=end.getDate()-start.getDate();if(d<0){m--;const prev=new Date(end.getFullYear(),end.getMonth(),0);d+=prev.getDate()}if(m<0){y--;m+=12}return{years:y,months:m,days:d}}
-    function getCompletedYears(start,today){let years=today.getFullYear()-start.getFullYear();if(addYears(start,years)>today)years--;return Math.max(0,years)}
+    function addDays(date,days){return new Date(date.getFullYear(),date.getMonth(),date.getDate()+days)}
+    function diffDays(start,end){return Math.round((Date.UTC(end.getFullYear(),end.getMonth(),end.getDate())-Date.UTC(start.getFullYear(),start.getMonth(),start.getDate()))/86400000)}
+    function diffYMD(start,end){
+      if(end<start)return{years:0,months:0,days:0};
+      const years=getCompletedYears(start,end);
+      const anchorYear=addYears(start,years);
+      let months=0;
+      while(months<11 && addMonths(anchorYear,months+1)<=end)months++;
+      return{years,months,days:diffDays(addMonths(anchorYear,months),end)};
+    }
+    function getCompletedYears(start,today){
+      let years=today.getFullYear()-start.getFullYear();
+      if(addYears(start,years)>today)years--;
+      return Math.max(0,years);
+    }
+    // 勞動基準法第38條：滿六個月後3日、滿1年後再獲得該週期7日，以此類推。
     function getLeaveDays(start,today){
       if(today<addMonths(start,6))return 0;
       if(today<addYears(start,1))return 3;
@@ -160,30 +182,121 @@
       if(today<addYears(start,3))return 10;
       if(today<addYears(start,5))return 14;
       if(today<addYears(start,10))return 15;
-      const years=getCompletedYears(start,today);
-      return Math.min(15+(years-9),30);
+      return Math.min(15+(getCompletedYears(start,today)-9),30);
     }
-    function getCurrentPeriod(start,today){const half=addMonths(start,6);if(today<half)return{periodStart:null,periodEnd:null};if(today<addYears(start,1))return{periodStart:half,periodEnd:new Date(addYears(start,1).getTime()-86400000)};let years=today.getFullYear()-start.getFullYear();let pStart=addYears(start,years);if(pStart>today){years--;pStart=addYears(start,years)}return{periodStart:pStart,periodEnd:new Date(addYears(pStart,1).getTime()-86400000)}}
-    function getNextIncrease(start,today){const checkpoints=[6,12,24,36,60,120,132,144,156,168,180,192,204,216,228,240,252,264,276,288,300,312,324,336,348,360];for(const m of checkpoints){const date=addMonths(start,m);if(date>today)return{date,days:getLeaveDays(start,date)}}return null}
+    function getCurrentPeriod(start,today){
+      const half=addMonths(start,6);
+      if(today<half)return{periodStart:null,periodEnd:null};
+      const oneYear=addYears(start,1);
+      if(today<oneYear)return{periodStart:half,periodEnd:addDays(oneYear,-1)};
+      const years=getCompletedYears(start,today);
+      return{periodStart:addYears(start,years),periodEnd:addDays(addYears(start,years+1),-1)};
+    }
     function escapeHtml(text){return String(text).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
     function normalizeUsedLeaveDays(value){const n=Number(value||0);return Number.isFinite(n)&&n>0?n:0}
     function getRemainingLeaveDays(total,used){return Math.max(0, +(total - normalizeUsedLeaveDays(used)).toFixed(2))}
     function formatLeaveDays(days){const rounded = Number(days);return Number.isInteger(rounded)? `${rounded}` : `${rounded}`.replace(/\.0+$/,'').replace(/(\.\d*[1-9])0+$/,'$1')}
 
-    async function loadEmployees(){if(!db) return [];const {data,error}=await db.from(TABLE_NAME).select('*').order('start_date',{ascending:true});if(error){alert('讀取失敗：'+error.message);return []}return data.map(row=>({id:row.id,name:row.name,startDate:row.start_date,usedLeaveDays:normalizeUsedLeaveDays(row.used_leave_days)}))}
+    async function loadEmployees(){
+      if(!db)return [];
+      const {data:employees,error:employeesError}=await db.from(TABLE_NAME).select('*').order('start_date',{ascending:true});
+      if(employeesError)throw new Error('無法讀取員工資料：'+employeesError.message);
+      if(!employees.length)return [];
+      const today=getToday();
+      const validStarts=employees.map(row=>getCurrentPeriod(parseDate(row.start_date),today).periodStart).filter(Boolean);
+      let usageRows=[];
+      if(validStarts.length){
+        const earliest=formatDate(new Date(Math.min(...validStarts.map(d=>d.getTime()))));
+        // Supabase 預設每次最多回傳約 1000 筆；分頁讀取避免漏算。
+        const batchSize=1000;
+        for(let from=0;;from+=batchSize){
+          const {data:usage,error:usageError}=await db.from(USAGE_TABLE_NAME)
+            .select('id,employee_id,period_start,days')
+            .gte('period_start',earliest).order('id',{ascending:true})
+            .range(from,from+batchSize-1);
+          if(usageError)throw new Error('無法讀取特休紀錄，請先執行新版 Supabase SQL：'+usageError.message);
+          usageRows.push(...(usage||[]));
+          if(!usage||usage.length<batchSize)break;
+        }
+      }
+      const usedByPeriod=new Map();
+      for(const entry of usageRows){
+        const key=`${entry.employee_id}|${entry.period_start}`;
+        usedByPeriod.set(key,(usedByPeriod.get(key)||0)+Number(entry.days||0));
+      }
+      return employees.map(row=>{
+        const p=getCurrentPeriod(parseDate(row.start_date),today);
+        const periodStart=p.periodStart?formatDate(p.periodStart):null;
+        const used=periodStart?(usedByPeriod.get(`${row.id}|${periodStart}`)||0):0;
+        return{
+          id:row.id,name:row.name,startDate:row.start_date,
+          periodStart,
+          usedLeaveDays:normalizeUsedLeaveDays(used),
+          // 舊版沒有記錄使用天數屬於哪一個週期：不擅自歸到本期。
+          legacyUsedDays:normalizeUsedLeaveDays(row.used_leave_days)
+        };
+      });
+    }
     async function insertEmployee(employee){const {error}=await db.from(TABLE_NAME).insert({name:employee.name,start_date:employee.startDate});if(error)throw error}
     async function updateEmployee(employee){const {error}=await db.from(TABLE_NAME).update({name:employee.name,start_date:employee.startDate,updated_at:new Date().toISOString()}).eq('id',employee.id);if(error)throw error}
-    async function updateUsedLeave(id, usedLeaveDays){const {error}=await db.from(TABLE_NAME).update({used_leave_days:usedLeaveDays,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error}
+    async function recordLeaveUse(id,periodStart,days,employeeName,startDate){
+      if(!periodStart)throw new Error('尚未滿半年，不能使用特休。');
+      const {error}=await db.from(USAGE_TABLE_NAME).insert({employee_id:id,employee_name:employeeName,start_date:startDate,period_start:periodStart,days,recorded_on:formatDate(getToday())});
+      if(error)throw error;
+    }
     async function removeEmployee(id){const {error}=await db.from(TABLE_NAME).delete().eq('id',id);if(error)throw error}
 
     async function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='listView')await renderEmployeeList();if(id==='deleteView')await renderDeleteList()}
     function showAddView(){document.getElementById('formTitle').textContent='新增員工';document.getElementById('employeeId').value='';document.getElementById('employeeName').value='';document.getElementById('startDate').value='';document.getElementById('formStatus').textContent='';showView('formView')}
     async function showEditView(id){const employees=await loadEmployees();const employee=employees.find(e=>e.id===id);if(!employee)return;document.getElementById('formTitle').textContent='編輯員工資料';document.getElementById('employeeId').value=employee.id;document.getElementById('employeeName').value=employee.name;document.getElementById('startDate').value=employee.startDate;document.getElementById('formStatus').textContent='';showView('formView')}
 
-    async function renderEmployeeList(){const list=document.getElementById('employeeList');const status=document.getElementById('listStatus');list.innerHTML='<div class="empty">讀取中...</div>';const employees=await loadEmployees();status.textContent=`共 ${employees.length} 位員工`;if(!employees.length){list.innerHTML='<div class="empty">目前沒有員工資料，請先新增員工。</div>';return}const today=getToday();list.innerHTML=employees.map(e=>{const start=parseDate(e.startDate);const totalLeaveDays=getLeaveDays(start,today);const leaveDays=getRemainingLeaveDays(totalLeaveDays,e.usedLeaveDays);const s=diffYMD(start,today);return `<div class="employee-card clickable" onclick="showDetail('${e.id}')"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div><span class="pill">目前特休 ${formatLeaveDays(leaveDays)} 天</span><div class="muted" style="margin-top:8px">年資：${s.years} 年 ${s.months} 個月 ${s.days} 天</div></div><div class="actions" style="margin-top:0"><button class="btn secondary" onclick="event.stopPropagation();showEditView('${e.id}')">編輯</button></div></div>`}).join('')}
-    async function showDetail(id){const employees=await loadEmployees();const e=employees.find(x=>x.id===id);if(!e)return;currentDetailEmployeeId=id;const start=parseDate(e.startDate);const today=getToday();const totalLeaveDays=getLeaveDays(start,today);const remainingLeaveDays=getRemainingLeaveDays(totalLeaveDays,e.usedLeaveDays);const s=diffYMD(start,today);const p=getCurrentPeriod(start,today);document.getElementById('employeeDetail').innerHTML=`<h3 style="font-size:28px;margin:0 0 4px">${escapeHtml(e.name)}</h3><div class="muted">入職日期：${e.startDate}</div><div class="detail-grid"><div class="info-box"><span>目前特休</span><strong>${formatLeaveDays(remainingLeaveDays)} 天</strong></div><div class="info-box"><span>目前年資</span><strong>${s.years} 年 ${s.months} 個月 ${s.days} 天</strong></div><div class="info-box"><span>本期特休期間</span><strong>${p.periodStart?`${formatDate(p.periodStart)} ～ ${formatDate(p.periodEnd)}`:'尚未產生特休'}</strong></div><div class="info-box"><span>已使用特休</span><strong>${formatLeaveDays(e.usedLeaveDays)} 天</strong></div></div><div class="actions"><button class="btn" onclick="showEditView('${e.id}')">編輯員工資料</button><button class="btn secondary" onclick="openLeaveModal('${e.id}')">使用特休</button><button class="btn secondary" onclick="showView('listView')">回員工列表</button></div>`;showView('detailView')}
+    async function renderEmployeeList(){
+      const list=document.getElementById('employeeList');
+      const status=document.getElementById('listStatus');
+      list.innerHTML='<div class="empty">讀取中...</div>';
+      let employees;
+      try{employees=await loadEmployees()}catch(err){list.innerHTML=`<div class="notice">${escapeHtml(err.message)}</div>`;status.textContent='';return}
+      status.textContent=`共 ${employees.length} 位員工`;
+      if(!employees.length){list.innerHTML='<div class="empty">目前沒有員工資料，請先新增員工。</div>';return}
+      const today=getToday();
+      list.innerHTML=employees.map(e=>{
+        const start=parseDate(e.startDate),totalLeaveDays=getLeaveDays(start,today);
+        const remaining=getRemainingLeaveDays(totalLeaveDays,e.usedLeaveDays),s=diffYMD(start,today);
+        const label=e.legacyUsedDays>0?'特休待核對':`目前特休 ${formatLeaveDays(remaining)} 天`;
+        return `<div class="employee-card clickable" onclick="showDetail('${e.id}')"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div><span class="pill">${label}</span><div class="muted" style="margin-top:8px">年資：${s.years} 年 ${s.months} 個月 ${s.days} 天</div></div><div class="actions" style="margin-top:0"><button class="btn secondary" onclick="event.stopPropagation();showEditView('${e.id}')">編輯</button></div></div>`;
+      }).join('');
+    }
+    async function showDetail(id){
+      let employees;
+      try{employees=await loadEmployees()}catch(err){document.getElementById('employeeDetail').innerHTML=`<div class="notice">${escapeHtml(err.message)}</div><div class="actions"><button class="btn secondary" onclick="showView('listView')">回員工列表</button></div>`;showView('detailView');return}
+      const e=employees.find(x=>x.id===id);if(!e)return;
+      currentDetailEmployeeId=id;
+      const start=parseDate(e.startDate),today=getToday(),total=getLeaveDays(start,today);
+      const remaining=getRemainingLeaveDays(total,e.usedLeaveDays),s=diffYMD(start,today),p=getCurrentPeriod(start,today);
+      const legacyNotice=e.legacyUsedDays>0?`<div class="notice">舊版累計已使用特休 ${formatLeaveDays(e.legacyUsedDays)} 天，但未記錄所屬週期。請先查核、匯入對應週期，再清除舊欄位數值；在完成前不顯示可能錯誤的剩餘天數。</div>`:'';
+      const remainderLabel=e.legacyUsedDays>0?'待核對':`${formatLeaveDays(remaining)} 天`;
+      const disabled=e.legacyUsedDays>0||total===0?'disabled':'';
+      document.getElementById('employeeDetail').innerHTML=`<h3 style="font-size:28px;margin:0 0 4px">${escapeHtml(e.name)}</h3><div class="muted">入職日期：${e.startDate}</div>${legacyNotice}<div class="detail-grid"><div class="info-box"><span>目前特休（剩餘）</span><strong>${remainderLabel}</strong></div><div class="info-box"><span>本期法定特休</span><strong>${total} 天</strong></div><div class="info-box"><span>目前年資</span><strong>${s.years} 年 ${s.months} 個月 ${s.days} 天</strong></div><div class="info-box"><span>本期特休期間</span><strong>${p.periodStart?`${formatDate(p.periodStart)} ～ ${formatDate(p.periodEnd)}`:'尚未產生特休'}</strong></div><div class="info-box"><span>本期已使用特休</span><strong>${formatLeaveDays(e.usedLeaveDays)} 天</strong></div></div><div class="subtle-note">依全時勞工週年制計算；部分工時須另依工時比例計算。不自動併入前期未休假，未休天數須依法結算或經勞雇雙方協商遞延。</div><div class="actions"><button class="btn" onclick="showEditView('${e.id}')">編輯員工資料</button><button class="btn secondary" ${disabled} onclick="openLeaveModal('${e.id}')">使用特休</button><button class="btn secondary" onclick="showView('listView')">回員工列表</button></div>`;
+      showView('detailView');
+    }
     async function renderDeleteList(){const list=document.getElementById('deleteList');const status=document.getElementById('deleteStatus');list.innerHTML='<div class="empty">讀取中...</div>';const employees=await loadEmployees();status.textContent=`共 ${employees.length} 位員工`;if(!employees.length){list.innerHTML='<div class="empty">目前沒有可刪除的員工資料。</div>';return}list.innerHTML=employees.map(e=>`<div class="employee-card"><div class="employee-main"><strong>${escapeHtml(e.name)}</strong><div class="muted">入職日期：${e.startDate}</div></div><div class="muted">刪除後無法還原</div><button class="btn danger" onclick="deleteEmployee('${e.id}')">刪除</button></div>`).join('')}
-    async function openLeaveModal(id){const employees=await loadEmployees();const employee=employees.find(e=>e.id===id);if(!employee)return;const totalLeaveDays=getLeaveDays(parseDate(employee.startDate),getToday());const remainingLeaveDays=getRemainingLeaveDays(totalLeaveDays,employee.usedLeaveDays);currentDetailEmployeeId=id;document.getElementById('leaveModalText').textContent=`請輸入 ${employee.name} 本次使用的特休天數。`;document.getElementById('leaveRemainingNote').textContent=`目前剩餘特休：${formatLeaveDays(remainingLeaveDays)} 天`;document.getElementById('leaveDaysInput').value='';document.getElementById('leaveDaysInput').max=remainingLeaveDays;document.getElementById('leaveStatus').textContent='';document.getElementById('leaveModal').classList.add('show');setTimeout(()=>document.getElementById('leaveDaysInput').focus(),0)}
+    async function openLeaveModal(id){
+      let employees;
+      try{employees=await loadEmployees()}catch(err){alert(err.message);return}
+      const employee=employees.find(e=>e.id===id);if(!employee)return;
+      if(employee.legacyUsedDays>0){alert('請先核對舊版已使用特休資料，避免重複或錯誤扣除。');return}
+      const total=getLeaveDays(parseDate(employee.startDate),getToday());
+      const remaining=getRemainingLeaveDays(total,employee.usedLeaveDays);
+      if(!employee.periodStart||remaining<=0){alert('目前沒有可使用的特休天數。');return}
+      currentDetailEmployeeId=id;
+      document.getElementById('leaveModalText').textContent=`請輸入 ${employee.name} 本次使用的特休天數。`;
+      document.getElementById('leaveRemainingNote').textContent=`本期剩餘特休：${formatLeaveDays(remaining)} 天`;
+      document.getElementById('leaveDaysInput').value='';
+      document.getElementById('leaveDaysInput').max=remaining;
+      document.getElementById('leaveStatus').textContent='';
+      document.getElementById('leaveModal').classList.add('show');
+      setTimeout(()=>document.getElementById('leaveDaysInput').focus(),0);
+    }
     function closeLeaveModal(){document.getElementById('leaveModal').classList.remove('show');document.getElementById('leaveStatus').textContent=''}
 
     async function deleteEmployee(id){const employees=await loadEmployees();const employee=employees.find(e=>e.id===id);const name=employee?employee.name:'這位員工';if(!confirm(`確定要刪除「${name}」嗎？`))return;try{await removeEmployee(id);await renderDeleteList()}catch(err){alert('刪除失敗：'+err.message)}}
@@ -193,29 +306,25 @@
     document.getElementById('leaveForm').addEventListener('submit',async e=>{
       e.preventDefault();
       if(!currentDetailEmployeeId)return;
-      const employees=await loadEmployees();
-      const employee=employees.find(item=>item.id===currentDetailEmployeeId);
-      if(!employee)return;
-      const totalLeaveDays=getLeaveDays(parseDate(employee.startDate),getToday());
-      const remainingLeaveDays=getRemainingLeaveDays(totalLeaveDays,employee.usedLeaveDays);
-      const inputValue=Number(document.getElementById('leaveDaysInput').value);
       const status=document.getElementById('leaveStatus');
       const button=document.getElementById('leaveSubmitButton');
-      if(!Number.isFinite(inputValue) || inputValue<=0){status.textContent='請輸入正確的天數。';return}
-      if(inputValue>remainingLeaveDays){status.textContent=`輸入天數不可大於目前剩餘特休 ${formatLeaveDays(remainingLeaveDays)} 天。`;return}
+      const inputValue=Number(document.getElementById('leaveDaysInput').value);
+      if(!Number.isFinite(inputValue)||inputValue<=0||Math.round(inputValue*2)!==inputValue*2){status.textContent='請輸入 0.5 天為單位的正確天數。';return}
       button.disabled=true;
       status.textContent='送出中...';
       try{
-        const nextUsedLeaveDays=+(employee.usedLeaveDays + inputValue).toFixed(2);
-        await updateUsedLeave(currentDetailEmployeeId,nextUsedLeaveDays);
+        const employees=await loadEmployees(),employee=employees.find(item=>item.id===currentDetailEmployeeId);
+        if(!employee)throw new Error('找不到員工。');
+        if(employee.legacyUsedDays>0)throw new Error('請先核對舊版特休使用資料。');
+        const total=getLeaveDays(parseDate(employee.startDate),getToday());
+        const remaining=getRemainingLeaveDays(total,employee.usedLeaveDays);
+        if(inputValue>remaining)throw new Error(`使用天數不可大於本期剩餘特休 ${formatLeaveDays(remaining)} 天。`);
+        await recordLeaveUse(currentDetailEmployeeId,employee.periodStart,inputValue,employee.name,employee.startDate);
         closeLeaveModal();
         await showDetail(currentDetailEmployeeId);
-      }catch(err){
-        status.textContent='送出失敗：'+err.message+(err.message.includes('used_leave_days')?'，請先在 Supabase 新增 used_leave_days 欄位。':'');
-      }finally{
-        button.disabled=false;
-      }
-    })
+      }catch(err){status.textContent='送出失敗：'+err.message}
+      finally{button.disabled=false}
+    });
 
     document.getElementById('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();
